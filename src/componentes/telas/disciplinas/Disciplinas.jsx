@@ -16,37 +16,37 @@ function Disciplinas() {
         await fetch(`${process.env.REACT_APP_ENDERECO_API}/disciplinas`)
             .then(response => response.json())
             .then(data => setListaObjetos(data))
-            .catch(err => console.log('Erro: ' + err))
+            .catch(err => setAlerta({ "status": "error", "message": err }))
     }
 	
     const recuperar = async codigo => {    
-         await fetch(`${process.env.REACT_APP_ENDERECO_API}/disciplinas/${codigo}`)
-             .then(response => response.json())
-             .then(data => setObjeto(data))
-             .catch(err => console.log(err))
-     }
+        await fetch(`${process.env.REACT_APP_ENDERECO_API}/disciplinas/${codigo}`)
+            .then(response => response.json())
+            .then(data => setObjeto(data))
+            .catch(err => setAlerta({ "status": "error", "message": err }))
+    }
 
-     const acaoCadastrar = async e => {
-         e.preventDefault();
-         const metodo = editar ? "PUT" : "POST";
-         try {
-             await fetch(`${process.env.REACT_APP_ENDERECO_API}/disciplinas`, {
-                 method: metodo,
-                 headers: { "Content-Type": "application/json" },
-                 body: JSON.stringify(objeto),
-             }).then(response => response.json())
-                 .then(json => {
-                     setAlerta({ status: json.status, message: json.message });
-                     setObjeto(json.objeto);
-                     if (!editar) {
-                         setEditar(true);
-                     }
-                 });
-         } catch (err) {
-             console.error(err.message);
-         }       
-         recuperaDisciplinas();
-     }
+    const acaoCadastrar = async e => {
+        e.preventDefault();
+        const metodo = editar ? "PUT" : "POST";
+        try {
+            await fetch(`${process.env.REACT_APP_ENDERECO_API}/disciplinas`, {
+                method: metodo,
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(objeto),
+            }).then(response => response.json())
+                .then(json => {
+                    setAlerta({ status: json.status, message: json.message });
+                    setObjeto(json.objeto);
+                    if (!editar) {
+                        setEditar(true);
+                    }
+                });
+        } catch (err) {
+        setAlerta({ "status": "error", "message": err })
+        }       
+        recuperaDisciplinas();
+    }
 
     const remover = async objeto => {
         if (window.confirm('Deseja remover este objeto?')) {
@@ -57,7 +57,7 @@ function Disciplinas() {
                     .then(json => setAlerta({ status: json.status, message: json.message }))
                 recuperaDisciplinas();
             } catch (err) {
-                console.log('Erro: ' + err)
+                setAlerta({ "status": "error", "message": err })
             }
         }
     }
