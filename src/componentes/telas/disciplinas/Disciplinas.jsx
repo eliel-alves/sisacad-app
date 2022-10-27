@@ -1,40 +1,91 @@
 import { useState, useEffect } from 'react';
 import DisciplinasContext from './DisciplinasContext';
 import Tabela from './Tabela';
-import Form from './Form'
+import Form from './Form';
+import WithAuth from "../../seg/withAuth";
+import Autenticacao from "../../seg/Autenticacao";
+import { useNavigate } from "react-router-dom";
 
 function Disciplinas() {
 
+    let navigate = useNavigate();
+
     const [alerta, setAlerta] = useState({ status: "", message: "" });
+    const [listaObjetos, setListaObjetos] = useState([]);
     const [editar, setEditar] = useState(false);
     const [objeto, setObjeto] = useState({
-        codigo: "", nome: "", descricao: "", sigla : ""
+        codigo: "", nome: "", descricao: "", sigla: ""
     })
-    const [listaObjetos, setListaObjetos] = useState([]);
 
     const recuperaDisciplinas = async () => {
-        await fetch(`${process.env.REACT_APP_ENDERECO_API}/disciplinas`)
-            .then(response => response.json())
-            .then(data => setListaObjetos(data))
-            .catch(err => console.log('Erro: ' + err))
+        try {
+            await fetch(`${process.env.REACT_APP_ENDERECO_API}/disciplinas`,
+                {
+                    method: 'GET',
+                    headers: {
+                        "Content-Type": "application/json",
+                        "x-access-token": Autenticacao.pegaAutenticacao().token
+                    }
+                })
+                .then(response => {
+                    if (response.ok) {
+                        return response.json();
+                    }
+                    throw new Error('Erro código: ' + response.status);
+                })
+                .then(data => setListaObjetos(data))
+                .catch(err => setAlerta({ "status": "error", "message": err }))
+        } catch (err) {
+            setAlerta({ "status": "error", "message": err })
+            window.location.reload();
+            navigate("/login", { replace: true });
+        }
     }
 	
-    const recuperar = async codigo => {    
-         await fetch(`${process.env.REACT_APP_ENDERECO_API}/disciplinas/${codigo}`)
-             .then(response => response.json())
-             .then(data => setObjeto(data))
-             .catch(err => console.log(err))
+    const recuperar = async codigo => {
+        try {
+            await fetch(`${process.env.REACT_APP_ENDERECO_API}/disciplinas/${codigo}`,
+                {
+                    method: 'GET',
+                    headers: {
+                        "Content-Type": "application/json",
+                        "x-access-token": Autenticacao.pegaAutenticacao().token
+                    }
+                })
+                .then(response => {
+                    if (response.ok) {
+                        return response.json();
+                    }
+                    throw new Error('Erro código: ' + response.status);
+                })
+                .then(data => setObjeto(data))
+                .catch(err => setAlerta({ "status": "error", "message": err }))
+        } catch(err) {
+            setAlerta({ "status": "error", "message": err })
+            window.location.reload();
+            navigate("/login", { replace: true });
+        }
      }
 
      const acaoCadastrar = async e => {
          e.preventDefault();
          const metodo = editar ? "PUT" : "POST";
          try {
-             await fetch(`${process.env.REACT_APP_ENDERECO_API}/disciplinas`, {
-                 method: metodo,
-                 headers: { "Content-Type": "application/json" },
-                 body: JSON.stringify(objeto),
-             }).then(response => response.json())
+             await fetch(`${process.env.REACT_APP_ENDERECO_API}/disciplinas`,
+                 {
+                     method: metodo,
+                     headers: {
+                         "Content-Type": "application/json",
+                         "x-access-token": Autenticacao.pegaAutenticacao().token
+                     },
+                     body: JSON.stringify(objeto)
+                 })
+                 .then(response => {
+                     if (response.ok) {
+                         return response.json();
+                     }
+                     throw new Error('Erro código: ' + response.status);
+                 })
                  .then(json => {
                      setAlerta({ status: json.status, message: json.message });
                      setObjeto(json.objeto);
@@ -43,7 +94,7 @@ function Disciplinas() {
                      }
                  });
          } catch (err) {
-             console.error(err.message);
+             setAlerta({ "status": "error", "message": err })
          }       
          recuperaDisciplinas();
      }
@@ -52,12 +103,26 @@ function Disciplinas() {
         if (window.confirm('Deseja remover este objeto?')) {
             try {
                 await fetch(`${process.env.REACT_APP_ENDERECO_API}/disciplinas/${objeto.codigo}`,
-                    { method: "DELETE" })
-                    .then(response => response.json())
-                    .then(json => setAlerta({ status: json.status, message: json.message }))
+                    {
+                        method: 'DELETE',
+                        headers: {
+                            "Content-Type": "application/json",
+                            "x-access-token": Autenticacao.pegaAutenticacao().token
+                        }
+                    })
+                    .then(response => {
+                        if (response.ok) {
+                            return response.json();
+                        }
+                        throw new Error('Erro código: ' + response.status);
+                    })
+                    .then(json => setAlerta({
+                        "status": json.status,
+                        "message": json.message
+                    }))
                 recuperaDisciplinas();
             } catch (err) {
-                console.log('Erro: ' + err)
+                setAlerta({ "status": "error", "message": err })
             }
         }
     }
@@ -92,4 +157,4 @@ function Disciplinas() {
     );
 }
 
-export default Disciplinas;
+export default WithAuth(Disciplinas);
